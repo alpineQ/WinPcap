@@ -56,6 +56,7 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 	ethernet_header* eh;
 	ip_header* ih;
 	tcp_header* th;
+	arp_header* ah;
 	u_int ip_len;
 
 	printf("Ethernet information\n");
@@ -63,34 +64,57 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 	printf("\tPacket number: %u\n", ++nPacket);
 	printf("\tSource MAC: %s\n", mactos(eh->srcMAC));
 	printf("\tDestination MAC: %s\n", mactos(eh->destMAC));
-	printf("\tEther type: %hu\n", eh->etherType);
+	printf("\tEther type: ");
+	switch (eh->etherType) {
+	case ETHERTYPE_TCPIP:
+		printf("IPv4\n");
+		break;
+	case ETHERTYPE_ARP:
+		printf("ARP\n");
+		break;
+	default:
+		printf("%hu\n", eh->etherType);
+		break;
+	}
 	printf("\tPacket length in bytes: %u\n", header->len);
 
-	printf("IP information\n");
-	/* retireve the position of the ip header */
-	ih = (ip_header*)(pkt_data + sizeof(ethernet_header));
 	
-	/* retireve the position of the udp header */
-	ip_len = (ih->ver_len & 0xf) * 4;
-	th = (tcp_header*)((u_char*)ih + ip_len);
 
-	/* print ip addresses and tcp ports */
-	printf("\tSource address: %s\n", iptos(ih->src));
-	printf("\tDestination address: %s\n", iptos(ih->dest));
-	printf("\tTime To Live: %u\n", ih->ttl);
-	printf("\tProtocol: %u\n", ih->protocol);
-	printf("\tLength: %u\n", ip_len);
+	if (eh->etherType == ETHERTYPE_ARP)
+	{
+		ah = (arp_header*)(pkt_data + sizeof(ethernet_header));
 
-	printf("TCP information\n");
-	printf("\tSource port: %hu\n", ntohs(th->destPort));
-	printf("\tDestination port: %hu\n", ntohs(th->destPort));
-	printf("\tSN: %u\n", th->num);
-	printf("\tAN: %u\n", th->ackNum);
-	printf("\tACK: %s\n", ((th->flags & 0x10) ? "true" : "false"));
-	printf("\tPSH: %s\n", ((th->flags & 0x8) ? "true" : "false"));
-	printf("\tRST: %s\n", ((th->flags & 0x4) ? "true" : "false"));
-	printf("\tSYN: %s\n", ((th->flags & 0x2) ? "true" : "false"));
-	printf("\tFIN: %s\n", ((th->flags & 0x1) ? "true" : "false"));
+		printf("ARP information\n");
+		printf("\tPacket type: %s\n", (ah->packetType == ARP_REQUEST) ? "request" : "response");
+	}
+	else {
+		/* retireve the position of the ip header */
+		ih = (ip_header*)(pkt_data + sizeof(ethernet_header));
+
+		/* retireve the position of the tcp header */
+		ip_len = (ih->ver_len & 0xf) * 4;
+		th = (tcp_header*)((u_char*)ih + ip_len);
+
+		/* print ip addresses and tcp ports */
+		printf("IP information\n");
+		printf("\tSource address: %s\n", iptos(ih->src));
+		printf("\tDestination address: %s\n", iptos(ih->dest));
+		printf("\tTime To Live: %u\n", ih->ttl);
+		printf("\tProtocol: %u\n", ih->protocol);
+		printf("\tLength: %hu\n", (ih->length >> 8) | (ih->length & 0x00FF));// Из-за проблем с чтением little-endian big-endian
+
+		printf("TCP information\n");
+		printf("\tSource port: %hu\n", ntohs(th->srcPort));
+		printf("\tDestination port: %hu\n", ntohs(th->destPort));
+		printf("\tSN: %u\n", th->num);
+		printf("\tAN: %u\n", th->ackNum);
+		printf("\tACK: %s\n", ((th->flags & 0x10) ? "true" : "false"));
+		printf("\tPSH: %s\n", ((th->flags & 0x8) ? "true" : "false"));
+		printf("\tRST: %s\n", ((th->flags & 0x4) ? "true" : "false"));
+		printf("\tSYN: %s\n", ((th->flags & 0x2) ? "true" : "false"));
+		printf("\tFIN: %s\n", ((th->flags & 0x1) ? "true" : "false"));
+		printf("\tWindow size: %hu\n", th->windowSize);
+	}
 
 	printf("\n");
 }

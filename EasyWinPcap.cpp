@@ -4,15 +4,13 @@
 
 int main()
 {
+	int nDevice;
 	InterfaceList devices;
 	devices.print();
-
-	devices.setFilter(1, "ip and tcp");
-
-
-	struct pcap_pkthdr* header;
-	const u_char* pkt_data;
-	devices.startLoopListener(1);
+	std::cout << "Choose interface 0-" << devices.getSize() - 1 << ": ";
+	std::cin >> nDevice;
+	devices.setFilter(nDevice, "tcp");
+	devices.startLoopListener(nDevice);
 
 	return 0;
 }

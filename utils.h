@@ -5,10 +5,14 @@
 #pragma comment(lib, "ws2_32.lib") // For getnameinfo()
 
 #define HAVE_REMOTE
+#define WIN32
 #include <pcap.h>
 #include <winsock.h>
 
 #define IP_ADDRESS_LENGTH 16
+#define ETHERTYPE_ARP 0x0608
+#define ETHERTYPE_TCPIP 0x0008
+#define ARP_REQUEST 0x0100
 
 typedef struct ethernet_header {
 	u_char destMAC[6];
@@ -39,15 +43,23 @@ typedef struct ip_header{
     u_int   op_pad;         // Option + Padding
 }ip_header;
 
-/* UDP header*/
+/* TCP header*/
 typedef struct tcp_header {
 	u_short srcPort;
 	u_short destPort;
 	u_int num;
 	u_int ackNum;
 	u_short flags;
+	u_short windowSize;
 } tcp_header;
 
+typedef struct arp_header {
+	u_short hardware;
+	u_short protocol;
+	u_char protoSize;
+	u_char hardwareSize;
+	u_short packetType;
+} arp_header;
 
 char* iptos(u_long uAddress);
 char* ip6tos(struct sockaddr* sockaddr, char* address, int addrlen);

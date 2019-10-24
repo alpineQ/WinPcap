@@ -1,6 +1,7 @@
 #pragma once
 
 #define HAVE_REMOTE
+#define WIN32
 #include <pcap.h>
 #include "utils.h"
 
