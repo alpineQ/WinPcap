@@ -9,6 +9,10 @@ int main()
 
 	devices.setFilter(1, "ip and tcp");
 
-	devices.startLoopListener(1, packet_handler);
+
+	struct pcap_pkthdr* header;
+	const u_char* pkt_data;
+	devices.startLoopListener(1);
+
 	return 0;
 }

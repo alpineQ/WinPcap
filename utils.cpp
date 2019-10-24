@@ -10,6 +10,13 @@ char* iptos(u_long uAddress)
 	return output;
 }
 
+char* iptos(ip_address ip) {
+	static char output[IP_ADDRESS_LENGTH + 6];
+
+	_snprintf_s(output, IP_ADDRESS_LENGTH + 6, sizeof(output), "%d.%d.%d.%d", ip.byte1, ip.byte2, ip.byte3, ip.byte4);
+	return output;
+}
+
 char* ip6tos(struct sockaddr* sockaddr, char* address, int addrlen)
 {
 	if (getnameinfo(sockaddr,
@@ -23,46 +30,67 @@ char* ip6tos(struct sockaddr* sockaddr, char* address, int addrlen)
 	return address;
 }
 
-void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_char* pkt_data)
-{
+char* mactos(u_char mac[6]) {
+	static char sMAC[18];
+	snprintf(sMAC, 18, "%X:%X:%X:%X:%X:%X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+	return sMAC;
+}
+
+char* getTimeStamp(const struct pcap_pkthdr* header, bool includeMilliSeconds = false) {
+	static char timestr[16];
 	struct tm ltime;
-	char timestr[16];
-	ip_header* ih;
-	udp_header* uh;
-	u_int ip_len;
-	u_short sport, dport;
 	time_t local_tv_sec;
 
 	/* convert the timestamp to readable format */
 	local_tv_sec = header->ts.tv_sec;
 	localtime_s(&ltime, &local_tv_sec);
 	strftime(timestr, sizeof(timestr), "%H:%M:%S", &ltime);
+	if (includeMilliSeconds)
+		snprintf(timestr, 16, "%s:%.6d", (const char*)timestr, header->ts.tv_usec);
 
-	/* print timestamp and length of the packet */
-	printf("%s.%.6d len:%d ", timestr, header->ts.tv_usec, header->len);
+	return timestr;
+}
 
+void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_char* pkt_data) {
+	static unsigned nPacket = 0;
+	ethernet_header* eh;
+	ip_header* ih;
+	tcp_header* th;
+	u_int ip_len;
+
+	printf("Ethernet information\n");
+	eh = (ethernet_header*)pkt_data;
+	printf("\tPacket number: %u\n", ++nPacket);
+	printf("\tSource MAC: %s\n", mactos(eh->srcMAC));
+	printf("\tDestination MAC: %s\n", mactos(eh->destMAC));
+	printf("\tEther type: %hu\n", eh->etherType);
+	printf("\tPacket length in bytes: %u\n", header->len);
+
+	printf("IP information\n");
 	/* retireve the position of the ip header */
-	ih = (ip_header*)(pkt_data +
-		14); //length of ethernet header
-
+	ih = (ip_header*)(pkt_data + sizeof(ethernet_header));
+	
 	/* retireve the position of the udp header */
-	ip_len = (ih->ver_ihl & 0xf) * 4;
-	uh = (udp_header*)((u_char*)ih + ip_len);
+	ip_len = (ih->ver_len & 0xf) * 4;
+	th = (tcp_header*)((u_char*)ih + ip_len);
 
-	/* convert from network byte order to host byte order */
-	sport = ntohs(uh->sport);
-	dport = ntohs(uh->dport);
+	/* print ip addresses and tcp ports */
+	printf("\tSource address: %s\n", iptos(ih->src));
+	printf("\tDestination address: %s\n", iptos(ih->dest));
+	printf("\tTime To Live: %u\n", ih->ttl);
+	printf("\tProtocol: %u\n", ih->protocol);
+	printf("\tLength: %u\n", ip_len);
 
-	/* print ip addresses and udp ports */
-	printf("%d.%d.%d.%d.%d -> %d.%d.%d.%d.%d\n",
-		ih->saddr.byte1,
-		ih->saddr.byte2,
-		ih->saddr.byte3,
-		ih->saddr.byte4,
-		sport,
-		ih->daddr.byte1,
-		ih->daddr.byte2,
-		ih->daddr.byte3,
-		ih->daddr.byte4,
-		dport);
+	printf("TCP information\n");
+	printf("\tSource port: %hu\n", ntohs(th->destPort));
+	printf("\tDestination port: %hu\n", ntohs(th->destPort));
+	printf("\tSN: %u\n", th->num);
+	printf("\tAN: %u\n", th->ackNum);
+	printf("\tACK: %s\n", ((th->flags & 0x10) ? "true" : "false"));
+	printf("\tPSH: %s\n", ((th->flags & 0x8) ? "true" : "false"));
+	printf("\tRST: %s\n", ((th->flags & 0x4) ? "true" : "false"));
+	printf("\tSYN: %s\n", ((th->flags & 0x2) ? "true" : "false"));
+	printf("\tFIN: %s\n", ((th->flags & 0x1) ? "true" : "false"));
+
+	printf("\n");
 }

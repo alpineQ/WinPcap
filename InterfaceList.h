@@ -2,6 +2,7 @@
 
 #define HAVE_REMOTE
 #include <pcap.h>
+#include "utils.h"
 
 class InterfaceList
 {
@@ -23,7 +24,8 @@ public:
 	void clear();
 
 	pcap_t* openDevice(unsigned nDevice);
-	int startLoopListener(unsigned nDevice, pcap_handler);
+	void startLoopListener(unsigned nDevice, pcap_handler = packet_handler);
+
 
 	void setFilter(unsigned nDevice, const char * filter);
 };

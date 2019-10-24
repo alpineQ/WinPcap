@@ -1,6 +1,5 @@
 #include <iostream>
 #include <string>
-#include "utils.h"
 #include "InterfaceList.h"
 
 
@@ -127,15 +126,14 @@ pcap_t* InterfaceList::openDevice(unsigned nDevice)
 	return adhandle;
 }
 
-int InterfaceList::startLoopListener(unsigned nDevice, pcap_handler)
+void InterfaceList::startLoopListener(unsigned nDevice, pcap_handler packet_handler)
 {
 	pcap_t* adhandle = openDevice(nDevice);
 	if (pcap_datalink(adhandle) != DLT_EN10MB)
 		throw std::runtime_error("This program works only on Ethernet networks.");
 
-	std::cout << std::endl << "Listening on " << get(nDevice)->description << "..." << std::endl;
+	std::cout << std::endl << "Listening on " << get(nDevice)->description << "..." << std::endl << std::endl;
 	pcap_loop(adhandle, 0, packet_handler, NULL);
-	return 0;
 }
 
 void InterfaceList::clear()
