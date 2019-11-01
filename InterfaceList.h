@@ -27,7 +27,8 @@ public:
 	pcap_t* openDevice(unsigned nDevice);
 	void startLoopListener(unsigned nDevice, pcap_handler = packet_handler);
 
+	void sendPacket(unsigned nDevice, u_char* packet, int size);
 
-	void setFilter(unsigned nDevice, const char * filter);
+	void setFilter(unsigned nDevice, const char* filter);
 };
 

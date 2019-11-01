@@ -30,9 +30,9 @@ char* ip6tos(struct sockaddr* sockaddr, char* address, int addrlen)
 	return address;
 }
 
-char* mactos(u_char mac[6]) {
+char* mactos(mac_address mac) {
 	static char sMAC[18];
-	snprintf(sMAC, 18, "%X:%X:%X:%X:%X:%X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+	snprintf(sMAC, 18, "%X:%X:%X:%X:%X:%X", mac.byte1, mac.byte2, mac.byte3, mac.byte4, mac.byte5, mac.byte6);
 	return sMAC;
 }
 
@@ -54,10 +54,6 @@ char* getTimeStamp(const struct pcap_pkthdr* header, bool includeMilliSeconds = 
 void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_char* pkt_data) {
 	static unsigned nPacket = 0;
 	ethernet_header* eh;
-	ip_header* ih;
-	tcp_header* th;
-	arp_header* ah;
-	u_int ip_len;
 
 	printf("Ethernet information\n");
 	eh = (ethernet_header*)pkt_data;
@@ -78,22 +74,21 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 	}
 	printf("\tPacket length in bytes: %u\n", header->len);
 
-	
-
-	if (eh->etherType == ETHERTYPE_ARP)
-	{
-		ah = (arp_header*)(pkt_data + sizeof(ethernet_header));
+	switch (eh->etherType) {
+	case ETHERTYPE_ARP: {
+		arp_header* ah = (arp_header*)(pkt_data + sizeof(ethernet_header));
 
 		printf("ARP information\n");
 		printf("\tPacket type: %s\n", (ah->packetType == ARP_REQUEST) ? "request" : "response");
+		break;
 	}
-	else {
+	case ETHERTYPE_TCPIP: {
 		/* retireve the position of the ip header */
-		ih = (ip_header*)(pkt_data + sizeof(ethernet_header));
+		ip_header* ih = (ip_header*)(pkt_data + sizeof(ethernet_header));
 
 		/* retireve the position of the tcp header */
-		ip_len = (ih->ver_len & 0xf) * 4;
-		th = (tcp_header*)((u_char*)ih + ip_len);
+		u_int ip_len = (ih->ver_len & 0xf) * 4;
+		tcp_header* th = (tcp_header*)((u_char*)ih + ip_len);
 
 		/* print ip addresses and tcp ports */
 		printf("IP information\n");
@@ -114,7 +109,10 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 		printf("\tSYN: %s\n", ((th->flags & 0x2) ? "true" : "false"));
 		printf("\tFIN: %s\n", ((th->flags & 0x1) ? "true" : "false"));
 		printf("\tWindow size: %hu\n", th->windowSize);
+		break;
 	}
-
+	default:
+		break;
+	}
 	printf("\n");
 }

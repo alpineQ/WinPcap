@@ -6,7 +6,7 @@
 InterfaceList::InterfaceList()
 {
 	if (pcap_findalldevs_ex((char*)PCAP_SRC_IF_STRING, NULL, &devicesList, errbuf) == -1)
-		throw std::runtime_error(std::string("Error in pcap_findalldevs_ex: ") +errbuf);
+		throw std::runtime_error(std::string("Error in pcap_findalldevs_ex: ") + errbuf);
 
 	size = 0;
 	for (pcap_if_t* device = devicesList; device != NULL; device = device->next)
@@ -51,7 +51,7 @@ void InterfaceList::printMore()
 
 		/* Description */
 		if (device->description)
-			std::cout << "\tDescription: " <<  device->description << std::endl;
+			std::cout << "\tDescription: " << device->description << std::endl;
 
 		/* Loopback Address*/
 		std::cout << "\tLoopback: " << ((device->flags & PCAP_IF_LOOPBACK) ? "yes" : "no") << std::endl;
@@ -112,7 +112,7 @@ pcap_t* InterfaceList::openDevice(unsigned nDevice)
 {
 	pcap_t* adhandle;
 	if ((adhandle = pcap_open(get(nDevice)->name,          // name of the device
-		65536,            // portion of the packet to capture
+		100,//65536,            // portion of the packet to capture
 						  // 65536 guarantees that the whole packet will be captured on all the link layers
 		PCAP_OPENFLAG_PROMISCUOUS,    // promiscuous mode
 		1000,             // read timeout
@@ -136,12 +136,19 @@ void InterfaceList::startLoopListener(unsigned nDevice, pcap_handler packet_hand
 	pcap_loop(adhandle, 0, packet_handler, NULL);
 }
 
+void InterfaceList::sendPacket(unsigned nDevice, u_char* packet, int size)
+{
+	pcap_t* device = openDevice(nDevice);
+	if (pcap_sendpacket(device, packet, 100) != NULL)
+		std::cout << "Error sending the packet : " << pcap_geterr(device) << std::endl;
+}
+
 void InterfaceList::clear()
 {
 	pcap_freealldevs(devicesList);
 }
 
-void InterfaceList::setFilter(unsigned nDevice, const char * filter)	
+void InterfaceList::setFilter(unsigned nDevice, const char* filter)
 {
 	u_long netmask;
 	bpf_program filterCode;
@@ -153,9 +160,9 @@ void InterfaceList::setFilter(unsigned nDevice, const char * filter)
 		/* If the interface is without an address we suppose to be in a C class network */
 		netmask = 0xffffff;
 
-		if (pcap_compile(adhandle, &filterCode, filter, 1, netmask) < 0)
-			throw std::runtime_error("Unable to compile the packet filter. Check the syntax.");
+	if (pcap_compile(adhandle, &filterCode, filter, 1, netmask) < 0)
+		throw std::runtime_error("Unable to compile the packet filter. Check the syntax.");
 
-		if (pcap_setfilter(adhandle, &filterCode) < 0)
-			throw std::runtime_error("Error setting the filter.");
+	if (pcap_setfilter(adhandle, &filterCode) < 0)
+		throw std::runtime_error("Error setting the filter.");
 }

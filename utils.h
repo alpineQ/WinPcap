@@ -13,34 +13,45 @@
 #define ETHERTYPE_ARP 0x0608
 #define ETHERTYPE_TCPIP 0x0008
 #define ARP_REQUEST 0x0100
+#define ETHERTYPE_ SSDP 56710
+
+
+/* 4 bytes IP address */
+typedef struct ip_address {
+	u_char byte1;
+	u_char byte2;
+	u_char byte3;
+	u_char byte4;
+}ip_address;
+
+typedef struct mac_address {
+	u_char byte1;
+	u_char byte2;
+	u_char byte3;
+	u_char byte4;
+	u_char byte5;
+	u_char byte6;
+}mac_address;
 
 typedef struct ethernet_header {
-	u_char destMAC[6];
-	u_char srcMAC[6];
+	mac_address destMAC;
+	mac_address srcMAC;
 	u_short etherType;
 }ethernet_header;
 
-/* 4 bytes IP address */
-typedef struct ip_address{
-    u_char byte1;
-    u_char byte2;
-    u_char byte3;
-    u_char byte4;
-}ip_address;
-
 /* IPv4 header */
-typedef struct ip_header{
-    u_char  ver_len;        // Version (4 bits) + Internet header length (4 bits)
-    u_char  serviceType;            // Type of service 
-    u_short length;           // Total length 
-    u_short identification; // Identification
-    u_short flags_offset;       // Flags (3 bits) + Fragment offset (13 bits)
-    u_char  ttl;            // Time to live
-    u_char  protocol;          // Protocol
-    u_short checkSum;            // Header checksum
-    ip_address  src;      // Source address
-    ip_address  dest;      // Destination address
-    u_int   op_pad;         // Option + Padding
+typedef struct ip_header {
+	u_char  ver_len;        // Version (4 bits) + Internet header length (4 bits)
+	u_char  serviceType;            // Type of service 
+	u_short length;           // Total length 
+	u_short identification; // Identification
+	u_short flags_offset;       // Flags (3 bits) + Fragment offset (13 bits)
+	u_char  ttl;            // Time to live
+	u_char  protocol;          // Protocol
+	u_short checkSum;            // Header checksum
+	ip_address  src;      // Source address
+	ip_address  dest;      // Destination address
+	u_int   op_pad;         // Option + Padding
 }ip_header;
 
 /* TCP header*/
