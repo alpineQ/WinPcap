@@ -1,11 +1,9 @@
 ﻿#include <iostream>
-#include <map>
 #include "utils.h"
 #include "InterfaceList.h"
 
 int main()
 {
-	std::map<ip_address, mac_address> commutationTable;
 	int nDevice;
 	InterfaceList devices;
 	devices.print();

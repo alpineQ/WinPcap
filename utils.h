@@ -2,7 +2,7 @@
 
 #pragma comment(lib, "wpcap.lib")
 #pragma comment(lib, "Packet.lib")
-#pragma comment(lib, "ws2_32.lib") // For getnameinfo()
+#pragma comment(lib, "ws2_32.lib")
 
 #define HAVE_REMOTE
 #define WIN32
@@ -10,11 +10,6 @@
 #include <winsock.h>
 
 #define IP_ADDRESS_LENGTH 16
-#define ETHERTYPE_ARP 0x0608
-#define ETHERTYPE_TCPIP 0x0008
-#define ARP_REQUEST 0x0100
-#define ETHERTYPE_ SSDP 56710
-
 
 /* 4 bytes IP address */
 typedef struct ip_address {
@@ -33,6 +28,9 @@ typedef struct mac_address {
 	u_char byte6;
 }mac_address;
 
+#define ETHERTYPE_ARP 0x0608
+#define ETHERTYPE_TCPIP 0x0008
+#define ETHERTYPE_SSDP 56710
 typedef struct ethernet_header {
 	mac_address destMAC;
 	mac_address srcMAC;
@@ -64,12 +62,20 @@ typedef struct tcp_header {
 	u_short windowSize;
 } tcp_header;
 
+
+#define ARP_REQUEST 0x0100
+#define ARP_REPLY 0x0200
+#define ARPPROTO_IPV4 0x0008
 typedef struct arp_header {
 	u_short hardware;
 	u_short protocol;
 	u_char protoSize;
 	u_char hardwareSize;
 	u_short packetType;
+	mac_address srcMAC;
+	ip_address srcIP;
+	mac_address destMAC;
+	ip_address destIP;
 } arp_header;
 
 char* iptos(u_long uAddress);

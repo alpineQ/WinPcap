@@ -1,5 +1,6 @@
 #pragma once
 
+#include <map>
 #define HAVE_REMOTE
 #define WIN32
 #include <pcap.h>
@@ -10,10 +11,12 @@ class InterfaceList
 	pcap_if_t* devicesList;
 	char errbuf[PCAP_ERRBUF_SIZE];
 	unsigned size;
+	std::map<ip_address, mac_address> commutationTable;
+	bool collectCommutationTable;
 
 public:
 
-	InterfaceList();
+	InterfaceList(bool collectAddresses = false);
 	~InterfaceList();
 
 	void print();

@@ -3,11 +3,11 @@
 #include "InterfaceList.h"
 
 
-InterfaceList::InterfaceList()
+InterfaceList::InterfaceList(bool collectAddresses)
 {
 	if (pcap_findalldevs_ex((char*)PCAP_SRC_IF_STRING, NULL, &devicesList, errbuf) == -1)
 		throw std::runtime_error(std::string("Error in pcap_findalldevs_ex: ") + errbuf);
-
+	collectCommutationTable = collectAddresses;
 	size = 0;
 	for (pcap_if_t* device = devicesList; device != NULL; device = device->next)
 		++size;
